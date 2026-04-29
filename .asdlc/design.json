@@ -1,0 +1,26 @@
+{
+  "overview": "A simple cloud-native time service exposing a single HTTP API that returns the current server time in JSON format. The architecture consists of a lightweight backend service that handles GET requests and responds with ISO 8601 formatted timestamps including timezone information. This service is designed for high availability and can be consumed by any HTTP client.",
+  "requirements": [
+    "The service must expose an HTTP GET endpoint that returns the current server time",
+    "The response must be in JSON format",
+    "The time must be formatted according to ISO 8601 standard",
+    "The response must include timezone information",
+    "The service must be accessible via a predictable URL path",
+    "The service must be available for consumption by any HTTP client or browser",
+    "The service must include a health check endpoint for monitoring"
+  ],
+  "components": [
+    {
+      "name": "time-service",
+      "componentType": "service",
+      "language": "Go",
+      "dependsOn": [],
+      "entrypoint": "deployment/service",
+      "buildpack": "docker",
+      "appPath": "/time-service",
+      "openAPISpec": "openapi: 3.0.3\ninfo:\n  title: Time Service API\n  description: A service that returns the current server time in JSON format\n  version: 1.0.0\nservers:\n  - url: http://localhost:9090\n    description: Local development server\npaths:\n  /time:\n    get:\n      summary: Get current server time\n      description: Returns the current server time in ISO 8601 format with timezone information\n      operationId: getCurrentTime\n      responses:\n        '200':\n          description: Successfully retrieved current time\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  timestamp:\n                    type: string\n                    format: date-time\n                    description: Current server time in ISO 8601 format\n                    example: '2024-01-15T14:30:45.123Z'\n                  timezone:\n                    type: string\n                    description: Server timezone\n                    example: 'UTC'\n                required:\n                  - timestamp\n                  - timezone\n        '500':\n          description: Internal server error\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  error:\n                    type: string\n                    description: Error message\n  /health:\n    get:\n      summary: Health check endpoint\n      description: Returns the health status of the service\n      operationId: healthCheck\n      responses:\n        '200':\n          description: Service is healthy\n          content:\n            application/json:\n              schema:\n                type: object\n                properties:\n                  status:\n                    type: string\n                    example: 'ok'\n                required:\n                  - status",
+      "componentAgentInstructions": "Implement a Go-based HTTP service using the standard net/http package that listens on port 9090. Create two endpoints: 1) GET /time - returns the current server time using time.Now() formatted as ISO 8601 (RFC3339) with timezone information. The response should be JSON with fields 'timestamp' (string in ISO 8601 format) and 'timezone' (string). Use time.Now().Format(time.RFC3339) for the timestamp and time.Now().Location().String() for the timezone. 2) GET /health - returns JSON with status 'ok' to indicate service health. Use json.NewEncoder to write responses. Set Content-Type header to 'application/json' for all responses. Handle errors gracefully with proper HTTP status codes (500 for internal errors). The service should be stateless, require no external dependencies, and start immediately when the container runs. Main function should call http.ListenAndServe(':9090', nil) with registered handlers. Include proper error handling for JSON encoding failures. Log startup message and any errors to stdout. The Dockerfile should use a multi-stage build with golang:1.21-alpine as builder and alpine:latest as runtime, exposing port 9090, and running the compiled binary as the entrypoint."
+    }
+  ],
+  "sourceSpec": "spec-v1"
+}
